@@ -1,0 +1,48 @@
+version: '3.1'
+
+services:
+  zoo1:
+    image: zookeeper
+    container_name: zoo1
+    restart: always
+    hostname: zoo1
+    # network_mode: host
+    ports:
+      - 2181:2181
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=zoo1:2888:3888;2181
+    command: sh -c "zkServer.sh start && echo 'create /election election' | zkCli.sh -server localhost:2181; sleep infinity"
+  java1:
+    container_name: jav1
+    # network_mode: host
+    build:
+      context: .
+      dockerfile: java/Dockerfile
+    volumes:
+      - ./java:/app
+    command: sh -c "sleep 1 && java -jar CloudComputing.jar & sleep 25 && echo CRASH CONTAINER 1"
+    depends_on:
+      - zoo1
+  java2:
+    container_name: jav2
+    # network_mode: host
+    build:
+      context: .
+      dockerfile: java/Dockerfile
+    volumes:
+      - ./java:/app
+    command: sh -c "sleep 10 && java -jar CloudComputing.jar & sleep 40 && echo CRASH CONTAINER 2"
+    depends_on:
+      - zoo1
+  java3:
+    container_name: jav3
+    # network_mode: host
+    build:
+      context: .
+      dockerfile: java/Dockerfile
+    volumes:
+      - ./java:/app
+    command: sh -c "sleep 15 && java -jar CloudComputing.jar & sleep 60 && echo CRASH CONTAINER 3"
+    depends_on:
+      - zoo1
